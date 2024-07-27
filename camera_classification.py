@@ -11,18 +11,19 @@ import time
 # Load model
 @st.cache_resource
 def load_model():
-    model = tf.keras.models.load_model('base_model.h5')
+    model = tf.keras.models.load_model('../base_model.h5')
     return model
 
+# Potrait Mode
 def bounding_box(frame):
     height, width, _ = frame.shape
-    roi_size = int(min(height, width) * 0.65) 
-    top = (height - roi_size) // 2
-    left = (width - roi_size) // 2
+    roi_width = int(width * 0.65)  # 65% of the width
+    roi_height = int(height * 0.2)  # 2`0% of the height
+    top = (height - roi_height) // 2
+    left = (width - roi_width) // 2
 
-    # Membuat bounding box tetap di tengah frame
-    cv2.rectangle(frame, (left, top), (left + roi_size, top + roi_size), (0, 255, 0), 2)
-    roi_for_prediction = frame[top:top + roi_size, left:left + roi_size]
+    cv2.rectangle(frame, (left, top), (left + roi_width, top + roi_height), (0, 255, 0), 2)
+    roi_for_prediction = frame[top:top + roi_height, left:left + roi_width]
 
     return frame, roi_for_prediction
 
@@ -68,7 +69,7 @@ MQTT_PORT = 1883
 MQTT_TOPIC = "/sic/kelompok15/conveyor"
 
 model = load_model()
-camera = cv2.VideoCapture(1)
+camera = cv2.VideoCapture(0)
 
 predictions_placeholder = st.empty()
 message_placeholder = st.empty()
@@ -123,11 +124,11 @@ while run:
                     camera.release()
                     
                     with message_placeholder:
-                        st.write("Data sent to MQTT. Pausing camera for 5 seconds.")
+                        st.write("Data sent to MQTT. Pausing camera for 3 seconds.")
                     
                     time.sleep(3)
                     message_placeholder.empty()
-                    camera = cv2.VideoCapture(1)
+                    camera = cv2.VideoCapture(0)
             else:
                 st.write("Predictions:")
                 st.write("Confidence below threshold, no prediction displayed.")
